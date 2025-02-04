@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pothole and Speed Breaker Detection Map</title>
+  <script src="https://unpkg.com/mapbox-gl/dist/mapbox-gl.js"></script>
+  <link href="https://unpkg.com/mapbox-gl/dist/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@mapbox/mapbox-gl-directions/dist/mapbox-gl-directions.css" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 2.5em;
+    }
+
+    .header p {
+      font-size: 1em;
+      margin-top: 5px;
+    }
+
+    #map {
+      height: 75vh;
+      width: 100%;
+      border: 2px solid #ddd;
+    }
+
+    .rating-container {
+      position: fixed;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      text-align: center;
+    }
+
+    .star-rating {
+      display: flex;
+      justify-content: space-between;
+      width: 120px;
+    }
+
+    .star {
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+
+    .star:hover {
+      color: gold;
+    }
+
+    .star.selected {
+      color: gold;
+    }
+
+    .submit-rating-btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .submit-rating-btn:hover {
+      background-color: #45a049;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 10px;
+      background: #f1f1f1;
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
+
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: white;
+      padding: 10px;
+      font-size: 0.9em;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
+
+    .legend div {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .legend span {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      margin-right: 5px;
+      border-radius: 50%;
+    }
+
+
+    .severity-high { background: red; }
+    .severity-medium { background: orange; }
+    .severity-low { background: yellow; }
+    .speedbreaker{ background: blue;}
+
+    .start-navigation-btn {
+      display: block;
+      margin: 20px auto;
+      padding: 15px 30px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .start-navigation-btn:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Pothole and Speed Breaker Detection Map</h1>
+    <p>Real-time tracking and reporting of road hazards</p>
+  </div>
+
+  <div id="map"></ ```html
+  <div id="map"></div>
+  
+  <div class="rating-container">
+    <h3>Rate Road Condition</h3>
+    <div class="star-rating" id="road-condition-rating">
+      <span class="star" data-rating="1">&#9733;</span>
+      <span class="star" data-rating="2">&#9733;</span>
+      <span class="star" data-rating="3">&#9733;</span>
+      <span class="star" data-rating="4">&#9733;</span>
+      <span class="star" data-rating="5">&#9733;</span>
+    </div>
+    <button class="submit-rating-btn" id="submit-rating-btn">Submit Rating</button>
+  </div>
+
+  <div style="display: flex; align-items: flex-start; justify-content: space-between; padding: 20px;">
+    <!-- Legend -->
+    <div style="display: flex; flex-direction: column; gap: 12px; padding: 10px; background-color: white; border: 1px solid #ccc; border-radius: 8px; max-width: 200px; margin-top: -10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 14px; height: 14px; background-color: red; border-radius: 50%;"></div>
+        <span>High Severity Pothole</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 14px; height: 14px; background-color: orange; border-radius: 50%;"></div>
+        <span>Medium Severity Pothole</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 14px; height: 14px; background-color: yellow; border-radius: 50%;"></div>
+        <span>Low Severity Pothole</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 14px; height: 14px; background-color: blue; border-radius: 50%;"></div>
+        <span>SpeedBreak</span>
+      </div>
+    </div>
+  
+    <!-- Start Navigation Button -->
+    <button class="start-navigation-btn" id="start-navigation-btn" style="padding: 10px 20px; background-color: green; color: white; border: none; border-radius: 5px; cursor: pointer;">
+      Start Navigation
+    </button>
+  </div>
+    
+
+  <div class="footer">
+    &copy; 2024 Road Hazard Detection System. All rights reserved.
+  </div>
+
+  <script>
+    // Mapbox Access Token
+    mapboxgl.accessToken = "pk.eyJ1IjoidGhhcnVuLTE3IiwiYSI6ImNtNWFsZ3B6MjRhYWcya3NkdGxzMThncHgifQ.oAVcEQsQMWIBNWCjRARoeg";
+    
+    let map;
+    let directions;
+    let userRating = 0; // Variable to store user rating
+
+    // Set default start and end locations (Trichy and Namakkal)
+    const startLocation = [78.704672, 10.790483]; // Trichy
+    const endLocation = [78.1705, 11.2812]; // Namakkal
+
+    // Initialize map
+    navigator.geolocation.getCurrentPosition(successLocation, errorLocation, {
+      enableHighAccuracy: true,
+    });
+
+    function successLocation(position) {
+      setupMap([position.coords.longitude, position.coords.latitude]);
+    }
+
+    function errorLocation() {
+      setupMap(startLocation); // If location fails, set to default start location
+    }
+
+    function setupMap(center) {
+      map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: center,
+        zoom: 8, // Initial zoom level to show a broader area
+      });
+
+      // Add navigation control
+      const nav = new mapboxgl.NavigationControl();
+      map.addControl(nav);
+
+      // Add directions control
+      directions = new MapboxDirections({
+        accessToken: mapboxgl.accessToken
+      });
+      map.addControl(directions, 'top-left');
+
+      // Fetch potholes and speed breakers data
+      fetchPotholesAndSpeedBreakers();
+
+      // Enable Start Navigation button and add event listener
+      document.getElementById('start-navigation-btn').addEventListener('click', () => {
+        startNavigation(startLocation, endLocation);
+      });
+
+      // Rating functionality
+      const stars = document.querySelectorAll('#road-condition-rating .star');
+      stars.forEach(star => {
+        star.addEventListener('click', () => {
+          userRating = star.getAttribute('data-rating');
+          console.log(`User  rated the road condition: ${userRating} stars`);
+
+          // Highlight the stars based on the selected rating
+          stars.forEach(s => s.classList.remove('selected'));
+          for (let i = 0; i < userRating; i++) {
+            stars[i].classList.add('selected');
+          }
+        });
+      });
+
+      // Submit rating functionality
+      document.getElementById('submit-rating-btn').addEventListener('click', () => {
+        if (userRating > 0) {
+          console.log(`Submitting rating: ${userRating} stars`);
+          // Here you can send the rating to your server
+          // Example: await fetch('/submit-rating', { method: 'POST', body: JSON.stringify({ rating: userRating }) });
+          alert(`Thank you for rating! You rated: ${userRating} stars`);
+        } else {
+          alert('Please select a rating before submitting.');
+        }
+      });
+    }
+    
+    // Fetch potholes and speed breakers from server
+    async function fetchPotholesAndSpeedBreakers() {
+      try {
+        const response = await fetch('http://localhost:8000/potholes.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        plotRoadHazards(data);
+      } catch (error) {
+        console.error("Error fetching road hazards:", error);
+      }
+    }
+
+    // Plot potholes and speed breakers on the map
+    function plotRoadHazards(data) {
+      let potholeCount = 0;
+
+      data.forEach((hazard) => {
+        if (hazard.type === 'pothole') {
+          potholeCount++;
+          markPothole(hazard.longitude, hazard.latitude, hazard.description, hazard.severity, hazard.cartype);
+        } else if (hazard.type === 'speed_breaker') {
+          markSpeedBreaker(hazard.longitude, hazard.latitude, hazard.description, hazard.severity, hazard.cartype);
+        }
+      });
+
+      // If potholes are detected, show a summary popup with the count
+      if (potholeCount > 0) {
+        showPotholeSummaryPopup(potholeCount);
+      }
+    }
+
+    // Show a popup displaying the number of potholes ahead
+    function showPotholeSummaryPopup(potholeCount) {
+      const popupContent = `${potholeCount} pothole${potholeCount > 1 ? 's' : ''} ahead`;
+
+      new mapboxgl.Popup()
+        .setLngLat([78.704672, 10.790483]) // Center of the map (can be adjusted based on your needs)
+        .setHTML(`<h3>${popupContent}</h3>`)
+        .addTo(map);
+    }
+
+    // Add pothole marker on the map
+    function markPothole(longitude, latitude, description, severity, cartype) {
+      let color = '';
+      if (severity === 'high') {
+        color = 'red'; // High severity
+      } else if (severity === 'medium') {
+        color = 'orange'; // Medium severity
+      } else {
+        color = 'yellow'; // Low severity or other conditions
+      }
+
+      new mapboxgl.Marker({ color: color })
+        .setLngLat([longitude, latitude])
+        .setPopup(new mapboxgl.Popup().setHTML(`
+          <h3>Pothole Alert</h3>
+          <p>${description}</p>
+          <p><strong>Severity:</strong> ${severity}</p>
+          <p><strong>Car Type Affected:</strong> ${cartype}</p>
+        `))
+        .addTo(map);
+    }
+
+    // Add speed breaker marker on the map
+    function markSpeedBreaker(longitude, latitude, description, severity, cartype) {
+      let color = 'blue';
+      let emoji = '';
+      if (severity === 'high') {
+        emoji = '⚠️'; // High severity
+      } else if (severity === 'medium') {
+        emoji = '⚡'; // Medium severity
+      } else {
+        emoji = '🟡'; // Low severity
+      }
+
+      new mapboxgl.Marker({ color: color })
+        .setLngLat([longitude, latitude])
+        .setPopup(new mapboxgl.Popup().setHTML(`
+          <h3>Speed Breaker</h3>
+          <p>${description}</p>
+          <p><strong>Severity:</strong> ${severity}</p>
+          <p><strong>Car Type Affected:</strong> ${cartype}</p>
+        `))
+        .addTo(map);
+    }
+
+    // Start navigation function
+    function startNavigation(startLocation, endLocation) {
+      console.log("Starting navigation from", startLocation, "to", endLocation);  // Debug: Check start and end locations
+      if (directions) {
+        // Set the origin and destination for the directions service
+        directions.setOrigin(startLocation);
+        directions.setDestination(endLocation);
+
+        // Zoom into the starting location when navigation starts
+        map.flyTo({
+          center: startLocation,
+          zoom: 14,  // Zoom in to the start location
+          essential: true
+        });
+      }
+    }
+  </script>
+</body>
+</html>
